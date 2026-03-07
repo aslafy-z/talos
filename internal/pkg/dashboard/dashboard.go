@@ -7,12 +7,17 @@ package dashboard
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"net/netip"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"time"
+	"unsafe"
 
 	"github.com/gdamore/tcell/v2"
 	_ "github.com/gdamore/tcell/v2/terminfo/l/linux" // linux terminal is used when running on the machine, but not included with tcell_minimal
@@ -30,6 +35,8 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/dashboard/resourcedata"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
+
+var debugKeys = true // hardcoded for debug build — revert before upstreaming
 
 func init() {
 	// set background to be left as the default color of the terminal
@@ -158,8 +165,13 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 		ipsToNodeAliases: ipsToNodeAliases,
 	}
 
+	debugRow := 0
+	if debugKeys {
+		debugRow = 4
+	}
+
 	dashboard.mainGrid = tview.NewGrid().
-		SetRows(1, 0, 1).
+		SetRows(debugRow, 1, 0, 1).
 		SetColumns(0)
 
 	dashboard.pages = tview.NewPages().AddPage(pageMain, dashboard.mainGrid, true, true)
@@ -167,8 +179,124 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 	dashboard.app.EnableMouse(true)
 	dashboard.app.SetRoot(dashboard.pages, true).SetFocus(dashboard.pages)
 
+	var debugBar *tview.TextView
+
+	if debugKeys {
+		debugBar = tview.NewTextView().SetDynamicColors(true)
+		debugBar.SetBackgroundColor(tcell.ColorRed)
+		debugBar.SetTextColor(tcell.ColorWhite)
+
+		// Collect fd and env info
+		fd0, _ := os.Readlink("/proc/self/fd/0")
+		fd1, _ := os.Readlink("/proc/self/fd/1")
+		fd2, _ := os.Readlink("/proc/self/fd/2")
+		term := os.Getenv("TERM")
+
+		// Find input event devices
+		evdevDevs, _ := filepath.Glob("/dev/input/event*")
+		evdevList := strings.Join(evdevDevs, " ")
+
+		initText := fmt.Sprintf(
+			">>> KEY DEBUG ON <<<\n"+
+				"TERM=%s  fd0=%s  fd1=%s  fd2=%s\n"+
+				"evdev: %s\n"+
+				"evdev keys: (counting...)  |  tcell keys: (waiting...)",
+			term, fd0, fd1, fd2,
+			evdevList,
+		)
+		debugBar.SetText(initText)
+		dashboard.mainGrid.AddItem(debugBar, 0, 0, 1, 1, 0, 0, false)
+
+		// Start evdev key counter in background
+		var evdevCount atomic.Int64
+		var evdevLastCode atomic.Int64
+		var evdevErr atomic.Value
+
+		go func() {
+			// Try each /dev/input/eventN looking for a keyboard
+			for _, dev := range evdevDevs {
+				f, err := os.Open(dev)
+				if err != nil {
+					continue
+				}
+
+				// input_event struct: {time_sec, time_usec, type(u16), code(u16), value(i32)}
+				// Size depends on arch, but on amd64: 8+8+2+2+4 = 24 bytes
+				evSize := int(unsafe.Sizeof(uint64(0)))*2 + 8 // two time fields + type(2)+code(2)+value(4)
+				buf := make([]byte, evSize)
+
+				for {
+					_, err := f.Read(buf)
+					if err != nil {
+						evdevErr.Store(fmt.Sprintf("%s: %v", dev, err))
+
+						break
+					}
+
+					// type is at offset sizeof(timeval) = 2*sizeof(long)
+					typeOffset := int(unsafe.Sizeof(uint64(0))) * 2
+					evType := binary.LittleEndian.Uint16(buf[typeOffset:])
+					evCode := binary.LittleEndian.Uint16(buf[typeOffset+2:])
+
+					// EV_KEY = 1
+					if evType == 1 {
+						evdevCount.Add(1)
+						evdevLastCode.Store(int64(evCode))
+					}
+				}
+
+				f.Close()
+			}
+
+			if evdevErr.Load() == nil {
+				evdevErr.Store("no readable evdev device found")
+			}
+		}()
+
+		// Periodic updater for evdev count display
+		go func() {
+			for {
+				time.Sleep(500 * time.Millisecond)
+
+				errStr := ""
+				if v := evdevErr.Load(); v != nil {
+					errStr = fmt.Sprintf("  err: %v", v)
+				}
+
+				dashboard.app.QueueUpdateDraw(func() {
+					current := debugBar.GetText(true)
+					lines := strings.Split(current, "\n")
+
+					evdevLine := fmt.Sprintf("evdev keys: %d (last code=%d)%s  |  tcell keys: %s",
+						evdevCount.Load(),
+						evdevLastCode.Load(),
+						errStr,
+						func() string {
+							if len(lines) >= 4 && strings.Contains(lines[3], "tcell keys:") {
+								parts := strings.SplitN(lines[3], "tcell keys:", 2)
+								if len(parts) == 2 {
+									return strings.TrimSpace(parts[1])
+								}
+							}
+
+							return "(waiting...)"
+						}(),
+					)
+
+					if len(lines) >= 4 {
+						lines[3] = evdevLine
+					} else {
+						lines = append(lines, evdevLine)
+					}
+
+					debugBar.SetText(strings.Join(lines, "\n"))
+				})
+			}
+		}()
+	}
+
 	header := components.NewHeader()
-	dashboard.mainGrid.AddItem(header, 0, 0, 1, 1, 0, 0, false)
+	dashboard.mainGrid.AddItem(header, 1, 0, 1, 1, 0, 0, false)
 
 	if err = dashboard.initScreenConfigs(ctx, defOptions.screens); err != nil {
 		return nil, err
@@ -204,6 +332,23 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 	}
 
 	dashboard.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if debugKeys && debugBar != nil {
+			current := debugBar.GetText(true)
+			lines := strings.Split(current, "\n")
+			tcellInfo := fmt.Sprintf("KEY: %s  Key()=%d  Rune()=%q  Mod=%v",
+				event.Name(), event.Key(), event.Rune(), event.Modifiers())
+
+			// Update line 4 (tcell keys part)
+			if len(lines) >= 4 {
+				parts := strings.SplitN(lines[3], "tcell keys:", 2)
+				if len(parts) == 2 {
+					lines[3] = parts[0] + "tcell keys: " + tcellInfo
+				}
+			}
+
+			debugBar.SetText(strings.Join(lines, "\n"))
+		}
+
 		config, screenOk := screenConfigByKeyCode[event.Key()]
 
 		allowNodeNavigation := dashboard.selectedScreenConfig != nil && dashboard.selectedScreenConfig.allowNodeNavigation
@@ -235,7 +380,7 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 		return event
 	})
 
-	dashboard.mainGrid.AddItem(dashboard.footer, 2, 0, 1, 1, 0, 0, false)
+	dashboard.mainGrid.AddItem(dashboard.footer, 3, 0, 1, 1, 0, 0, false)
 
 	dashboard.apiDataListeners = []APIDataListener{
 		header,
@@ -519,7 +664,7 @@ func (d *Dashboard) selectScreen(screen Screen) {
 		if info.screen == screen {
 			d.selectedScreenConfig = &info //nolint:exportloopref
 
-			d.mainGrid.AddItem(info.primitive, 1, 0, 1, 1, 0, 0, false)
+			d.mainGrid.AddItem(info.primitive, 2, 0, 1, 1, 0, 0, false)
 
 			info.primitive.onScreenSelect(true)
 
