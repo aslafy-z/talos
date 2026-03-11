@@ -188,7 +188,7 @@ FROM --platform=arm64 ${PKG_FLANNEL_CNI} AS pkg-flannel-cni-arm64
 
 FROM ${PKG_KERNEL} AS pkg-kernel
 FROM --platform=amd64 ${PKG_KERNEL} AS pkg-kernel-amd64
-FROM --platform=arm64 ${PKG_KERNEL} AS pkg-kernel-arm64
+FROM --platform=arm64 ghcr.io/siderolabs/kernel:v1.13.0-alpha.0-61-g3c982f8 AS pkg-kernel-arm64
 
 FROM ${PKG_PIGZ} AS pkg-pigz
 FROM --platform=arm64 ${PKG_PIGZ} AS pkg-pigz-arm64
