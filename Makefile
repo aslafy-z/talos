@@ -427,7 +427,7 @@ sbom:
 	@$(MAKE) local-sbom DEST=$(ARTIFACTS)
 
 image-%: ## Builds the specified image. Valid options are aws, azure, digital-ocean, gcp, and vmware etc (e.g. image-aws)
-	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG_IN)
+# 	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG_IN)
 	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
 		arch=$$(basename "$${platform}") && \
 		docker run --rm -t \
@@ -756,3 +756,9 @@ ci-temp-release-tag: ## Generates a temporary release tag for CI run.
 		echo "TAG=$(CI_RELEASE_TAG)" >> "$${GITHUB_ENV}"; \
 		echo "ABBREV_TAG=$(CI_RELEASE_TAG)" >> "$${GITHUB_ENV}"; \
 	fi
+
+
+zad:
+	make docker-imager DEST=_out PLATFORM=linux/amd64
+	docker load < _out/imager.tar
+	make iso
