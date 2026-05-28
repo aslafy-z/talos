@@ -47,7 +47,7 @@ func TestDiskHealthStatusSuite(t *testing.T) {
 				mock := &mockCollector{
 					results: map[string]smart.Result{
 						"/dev/nvme0n1": {
-							Source:             block.DiskHealthSourceNVMe,
+							Source:             block.DiskHealthSourceNVME,
 							Status:             block.DiskHealthStatusValueHealthy,
 							TemperatureCelsius: 42,
 							PowerOnHours:       12345,
@@ -89,14 +89,14 @@ func (suite *DiskHealthStatusSuite) TestNVMeDisk() {
 	ctest.AssertResource(suite, "nvme0n1", func(dhs *block.DiskHealthStatus, asrt *assert.Assertions) {
 		asrt.Equal("nvme0n1", dhs.TypedSpec().DiskID)
 		asrt.Equal("/dev/nvme0n1", dhs.TypedSpec().Device)
-		asrt.Equal(block.DiskHealthSourceNVMe, dhs.TypedSpec().HealthSource)
+		asrt.Equal(block.DiskHealthSourceNVME, dhs.TypedSpec().HealthSource)
 		asrt.Equal(block.DiskHealthStatusValueHealthy, dhs.TypedSpec().Status)
 		asrt.EqualValues(42, dhs.TypedSpec().TemperatureCelsius)
 		asrt.EqualValues(12345, dhs.TypedSpec().PowerOnHours)
 		asrt.EqualValues(27, dhs.TypedSpec().PowerCycles)
-		asrt.NotNil(dhs.TypedSpec().Details.NVMe)
-		asrt.EqualValues(12, dhs.TypedSpec().Details.NVMe.PercentageUsed)
-		asrt.EqualValues(3, dhs.TypedSpec().Details.NVMe.UnsafeShutdowns)
+		asrt.NotNil(dhs.TypedSpec().Details.NVME)
+		asrt.EqualValues(12, dhs.TypedSpec().Details.NVME.PercentageUsed)
+		asrt.EqualValues(3, dhs.TypedSpec().Details.NVME.UnsafeShutdowns)
 	})
 }
 
@@ -117,14 +117,35 @@ func (suite *DiskHealthStatusSuite) TestATADisk() {
 	})
 }
 
-func (suite *DiskHealthStatusSuite) TestUnsupportedDisk() {
+func (suite *DiskHealthStatusSuite) TestUnsupportedTransportSkipped() {
 	disk := block.NewDisk(block.NamespaceName, "sdb")
 	disk.TypedSpec().DevPath = "/dev/sdb"
 	disk.TypedSpec().Transport = "usb"
 	suite.Create(disk)
 
-	ctest.AssertResource(suite, "sdb", func(dhs *block.DiskHealthStatus, asrt *assert.Assertions) {
-		asrt.Equal("sdb", dhs.TypedSpec().DiskID)
+	// also create a supported disk to force the controller to reconcile
+	nvmeDisk := block.NewDisk(block.NamespaceName, "nvme0n1")
+	nvmeDisk.TypedSpec().DevPath = "/dev/nvme0n1"
+	nvmeDisk.TypedSpec().Transport = "nvme"
+	suite.Create(nvmeDisk)
+
+	// wait for the supported disk resource to appear
+	ctest.AssertResource(suite, "nvme0n1", func(dhs *block.DiskHealthStatus, asrt *assert.Assertions) {
+		asrt.Equal(block.DiskHealthSourceNVME, dhs.TypedSpec().HealthSource)
+	})
+
+	// the unsupported disk should not have a health status resource
+	ctest.AssertNoResource[*block.DiskHealthStatus](suite, "sdb")
+}
+
+func (suite *DiskHealthStatusSuite) TestCollectorError() {
+	disk := block.NewDisk(block.NamespaceName, "sdc")
+	disk.TypedSpec().DevPath = "/dev/sdc"
+	disk.TypedSpec().Transport = "scsi"
+	suite.Create(disk)
+
+	ctest.AssertResource(suite, "sdc", func(dhs *block.DiskHealthStatus, asrt *assert.Assertions) {
+		asrt.Equal("sdc", dhs.TypedSpec().DiskID)
 		asrt.Equal(block.DiskHealthSourceUnsupported, dhs.TypedSpec().HealthSource)
 		asrt.Equal(block.DiskHealthStatusValueUnknown, dhs.TypedSpec().Status)
 		asrt.NotEmpty(dhs.TypedSpec().Error)
@@ -138,7 +159,7 @@ func (suite *DiskHealthStatusSuite) TestDiskRemoval() {
 	suite.Create(disk)
 
 	ctest.AssertResource(suite, "nvme0n1", func(dhs *block.DiskHealthStatus, asrt *assert.Assertions) {
-		asrt.Equal(block.DiskHealthSourceNVMe, dhs.TypedSpec().HealthSource)
+		asrt.Equal(block.DiskHealthSourceNVME, dhs.TypedSpec().HealthSource)
 	})
 
 	suite.Destroy(disk)

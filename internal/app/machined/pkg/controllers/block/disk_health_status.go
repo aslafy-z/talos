@@ -75,12 +75,17 @@ func (ctrl *DiskHealthStatusController) Run(ctx context.Context, r controller.Ru
 	ticker := time.NewTicker(defaultHealthInterval)
 	defer ticker.Stop()
 
+	scanPending := true
+
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
+			// events (disk add/remove, config change) only trigger cleanup,
+			// not SMART collection, to avoid repeated IOCTL reads on bursts
 		case <-ticker.C:
+			scanPending = true
 		}
 
 		enabled, interval := ctrl.readConfig(ctx, r, logger)
@@ -89,10 +94,12 @@ func (ctrl *DiskHealthStatusController) Run(ctx context.Context, r controller.Ru
 
 		r.StartTrackingOutputs()
 
-		if enabled {
+		if enabled && scanPending {
 			if err := ctrl.collectHealth(ctx, r, logger); err != nil {
 				return fmt.Errorf("failed to collect disk health: %w", err)
 			}
+
+			scanPending = false
 		}
 
 		if err := safe.CleanupOutputs[*block.DiskHealthStatus](ctx, r); err != nil {
@@ -135,7 +142,12 @@ func (ctrl *DiskHealthStatusController) collectHealth(ctx context.Context, r con
 		diskID := disk.Metadata().ID()
 		devPath := disk.TypedSpec().DevPath
 
+		if !isSMARTCapableTransport(disk.TypedSpec().Transport) {
+			continue
+		}
+
 		result := ctrl.Collector.Collect(devPath)
+		checkedAt := time.Now()
 
 		if result.Error != "" {
 			logger.Debug("disk health collection issue",
@@ -154,10 +166,10 @@ func (ctrl *DiskHealthStatusController) collectHealth(ctx context.Context, r con
 				spec.TemperatureCelsius = result.TemperatureCelsius
 				spec.PowerOnHours = result.PowerOnHours
 				spec.PowerCycles = result.PowerCycles
-				spec.LastChecked = time.Now()
+				spec.LastChecked = checkedAt
 				spec.Error = result.Error
 				spec.Details = block.DiskHealthDetails{
-					NVMe: result.NVMe,
+					NVME: result.NVMe,
 					ATA:  result.ATA,
 				}
 
@@ -169,4 +181,13 @@ func (ctrl *DiskHealthStatusController) collectHealth(ctx context.Context, r con
 	}
 
 	return nil
+}
+
+func isSMARTCapableTransport(transport string) bool {
+	switch transport {
+	case "nvme", "ata", "sata", "scsi", "":
+		return true
+	default:
+		return false
+	}
 }

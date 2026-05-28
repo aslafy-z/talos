@@ -456,8 +456,8 @@ func (m *DiskHealthDetails) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x12
 	}
-	if m.NvMe != nil {
-		size, err := m.NvMe.MarshalToSizedBufferVT(dAtA[:i])
+	if m.Nvme != nil {
+		size, err := m.Nvme.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -2789,8 +2789,8 @@ func (m *DiskHealthDetails) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	if m.NvMe != nil {
-		l = m.NvMe.SizeVT()
+	if m.Nvme != nil {
+		l = m.Nvme.SizeVT()
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
 	if m.Ata != nil {
@@ -4862,7 +4862,7 @@ func (m *DiskHealthDetails) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field NvMe", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Nvme", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4889,10 +4889,10 @@ func (m *DiskHealthDetails) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.NvMe == nil {
-				m.NvMe = &DiskHealthNVMeDetails{}
+			if m.Nvme == nil {
+				m.Nvme = &DiskHealthNVMeDetails{}
 			}
-			if err := m.NvMe.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Nvme.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

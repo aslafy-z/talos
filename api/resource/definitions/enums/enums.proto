@@ -717,7 +717,7 @@ enum NethelpersWOLMode {
 // BlockDiskHealthSource describes the source of disk health information.
 enum BlockDiskHealthSource {
   DISK_HEALTH_SOURCE_UNKNOWN = 0;
-  DISK_HEALTH_SOURCE_NV_ME = 1;
+  DISK_HEALTH_SOURCE_NVME = 1;
   DISK_HEALTH_SOURCE_ATA = 2;
   DISK_HEALTH_SOURCE_UNSUPPORTED = 3;
 }

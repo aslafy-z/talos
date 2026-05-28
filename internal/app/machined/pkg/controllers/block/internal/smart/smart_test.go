@@ -34,7 +34,7 @@ func TestComputeNVMeStatus(t *testing.T) {
 		{
 			name:     "media errors",
 			details:  block.DiskHealthNVMeDetails{MediaAndDataIntegrityErrors: 5},
-			expected: block.DiskHealthStatusValueCritical,
+			expected: block.DiskHealthStatusValueWarning,
 		},
 		{
 			name:     "high percentage used",

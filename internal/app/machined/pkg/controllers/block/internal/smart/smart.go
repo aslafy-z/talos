@@ -72,7 +72,7 @@ func collectNVMe(dev *smartlib.NVMeDevice) Result {
 	sm, err := dev.ReadSMART()
 	if err != nil {
 		return Result{
-			Source: block.DiskHealthSourceNVMe,
+			Source: block.DiskHealthSourceNVME,
 			Status: block.DiskHealthStatusValueUnknown,
 			Error:  fmt.Sprintf("failed to read NVMe SMART data: %v", err),
 		}
@@ -88,7 +88,7 @@ func collectNVMe(dev *smartlib.NVMeDevice) Result {
 	status := ComputeNVMeStatus(details)
 
 	return Result{
-		Source:             block.DiskHealthSourceNVMe,
+		Source:             block.DiskHealthSourceNVME,
 		Status:             status,
 		TemperatureCelsius: int32(sm.Temperature) - 273,
 		PowerOnHours:       sm.PowerOnHours.Val[0],
@@ -147,12 +147,16 @@ func collectATA(dev *smartlib.SataDevice) Result {
 }
 
 // ComputeNVMeStatus derives the health status from NVMe details.
+//
+// Only CriticalWarning (a live controller-asserted condition) triggers critical.
+// Cumulative media error counters are reported as warning since they reflect
+// historical events that may not indicate current failure.
 func ComputeNVMeStatus(d *block.DiskHealthNVMeDetails) block.DiskHealthStatusValue {
-	if d.CriticalWarning != 0 || d.MediaAndDataIntegrityErrors > 0 {
+	if d.CriticalWarning != 0 {
 		return block.DiskHealthStatusValueCritical
 	}
 
-	if d.PercentageUsed > 90 {
+	if d.MediaAndDataIntegrityErrors > 0 || d.PercentageUsed > 90 {
 		return block.DiskHealthStatusValueWarning
 	}
 
@@ -160,16 +164,15 @@ func ComputeNVMeStatus(d *block.DiskHealthNVMeDetails) block.DiskHealthStatusVal
 }
 
 // ComputeATAStatus derives the health status from ATA details.
+//
+// Offline uncorrectable sectors indicate active data loss risk.
+// Pending and reallocated sectors are degradation warnings.
 func ComputeATAStatus(d *block.DiskHealthATADetails) block.DiskHealthStatusValue {
 	if d.OfflineUncorrectableCount > 0 {
 		return block.DiskHealthStatusValueCritical
 	}
 
-	if d.CurrentPendingSectorCount > 0 {
-		return block.DiskHealthStatusValueWarning
-	}
-
-	if d.ReallocatedSectorCount > 0 {
+	if d.CurrentPendingSectorCount > 0 || d.ReallocatedSectorCount > 0 {
 		return block.DiskHealthStatusValueWarning
 	}
 

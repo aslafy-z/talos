@@ -597,18 +597,18 @@ func (i DiskHealthSource) String() string {
 func _DiskHealthSourceNoOp() {
 	var x [1]struct{}
 	_ = x[DiskHealthSourceUnknown-(0)]
-	_ = x[DiskHealthSourceNVMe-(1)]
+	_ = x[DiskHealthSourceNVME-(1)]
 	_ = x[DiskHealthSourceATA-(2)]
 	_ = x[DiskHealthSourceUnsupported-(3)]
 }
 
-var _DiskHealthSourceValues = []DiskHealthSource{DiskHealthSourceUnknown, DiskHealthSourceNVMe, DiskHealthSourceATA, DiskHealthSourceUnsupported}
+var _DiskHealthSourceValues = []DiskHealthSource{DiskHealthSourceUnknown, DiskHealthSourceNVME, DiskHealthSourceATA, DiskHealthSourceUnsupported}
 
 var _DiskHealthSourceNameToValueMap = map[string]DiskHealthSource{
 	_DiskHealthSourceName[0:7]:        DiskHealthSourceUnknown,
 	_DiskHealthSourceLowerName[0:7]:   DiskHealthSourceUnknown,
-	_DiskHealthSourceName[7:11]:       DiskHealthSourceNVMe,
-	_DiskHealthSourceLowerName[7:11]:  DiskHealthSourceNVMe,
+	_DiskHealthSourceName[7:11]:       DiskHealthSourceNVME,
+	_DiskHealthSourceLowerName[7:11]:  DiskHealthSourceNVME,
 	_DiskHealthSourceName[11:14]:      DiskHealthSourceATA,
 	_DiskHealthSourceLowerName[11:14]: DiskHealthSourceATA,
 	_DiskHealthSourceName[14:25]:      DiskHealthSourceUnsupported,

@@ -511,7 +511,7 @@ func (x *DiskHealthATADetails) GetWearLevelingCount() uint64 {
 // DiskHealthDetails contains backend-specific health details.
 type DiskHealthDetails struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	NvMe          *DiskHealthNVMeDetails `protobuf:"bytes,1,opt,name=nv_me,json=nvMe,proto3" json:"nv_me,omitempty"`
+	Nvme          *DiskHealthNVMeDetails `protobuf:"bytes,1,opt,name=nvme,proto3" json:"nvme,omitempty"`
 	Ata           *DiskHealthATADetails  `protobuf:"bytes,2,opt,name=ata,proto3" json:"ata,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -547,9 +547,9 @@ func (*DiskHealthDetails) Descriptor() ([]byte, []int) {
 	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *DiskHealthDetails) GetNvMe() *DiskHealthNVMeDetails {
+func (x *DiskHealthDetails) GetNvme() *DiskHealthNVMeDetails {
 	if x != nil {
-		return x.NvMe
+		return x.Nvme
 	}
 	return nil
 }
@@ -2900,9 +2900,9 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\x1ccurrent_pending_sector_count\x18\x02 \x01(\x04R\x19currentPendingSectorCount\x12>\n" +
 	"\x1boffline_uncorrectable_count\x18\x03 \x01(\x04R\x19offlineUncorrectableCount\x12B\n" +
 	"\x1dreported_uncorrectable_errors\x18\x04 \x01(\x04R\x1breportedUncorrectableErrors\x12.\n" +
-	"\x13wear_leveling_count\x18\x05 \x01(\x04R\x11wearLevelingCount\"\xab\x01\n" +
-	"\x11DiskHealthDetails\x12L\n" +
-	"\x05nv_me\x18\x01 \x01(\v27.talos.resource.definitions.block.DiskHealthNVMeDetailsR\x04nvMe\x12H\n" +
+	"\x13wear_leveling_count\x18\x05 \x01(\x04R\x11wearLevelingCount\"\xaa\x01\n" +
+	"\x11DiskHealthDetails\x12K\n" +
+	"\x04nvme\x18\x01 \x01(\v27.talos.resource.definitions.block.DiskHealthNVMeDetailsR\x04nvme\x12H\n" +
 	"\x03ata\x18\x02 \x01(\v26.talos.resource.definitions.block.DiskHealthATADetailsR\x03ata\"\xdc\x01\n" +
 	"\x15DiskHealthNVMeDetails\x12)\n" +
 	"\x10critical_warning\x18\x01 \x01(\rR\x0fcriticalWarning\x12'\n" +
@@ -3182,7 +3182,7 @@ var file_resource_definitions_block_block_proto_goTypes = []any{
 	(enums.BlockVolumePhase)(0),            // 40: talos.resource.definitions.enums.BlockVolumePhase
 }
 var file_resource_definitions_block_block_proto_depIdxs = []int32{
-	6,  // 0: talos.resource.definitions.block.DiskHealthDetails.nv_me:type_name -> talos.resource.definitions.block.DiskHealthNVMeDetails
+	6,  // 0: talos.resource.definitions.block.DiskHealthDetails.nvme:type_name -> talos.resource.definitions.block.DiskHealthNVMeDetails
 	4,  // 1: talos.resource.definitions.block.DiskHealthDetails.ata:type_name -> talos.resource.definitions.block.DiskHealthATADetails
 	31, // 2: talos.resource.definitions.block.DiskHealthStatusSpec.health_source:type_name -> talos.resource.definitions.enums.BlockDiskHealthSource
 	32, // 3: talos.resource.definitions.block.DiskHealthStatusSpec.status:type_name -> talos.resource.definitions.enums.BlockDiskHealthStatusValue

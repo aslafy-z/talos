@@ -3294,7 +3294,7 @@ type BlockDiskHealthSource int32
 
 const (
 	BlockDiskHealthSource_DISK_HEALTH_SOURCE_UNKNOWN     BlockDiskHealthSource = 0
-	BlockDiskHealthSource_DISK_HEALTH_SOURCE_NV_ME       BlockDiskHealthSource = 1
+	BlockDiskHealthSource_DISK_HEALTH_SOURCE_NVME        BlockDiskHealthSource = 1
 	BlockDiskHealthSource_DISK_HEALTH_SOURCE_ATA         BlockDiskHealthSource = 2
 	BlockDiskHealthSource_DISK_HEALTH_SOURCE_UNSUPPORTED BlockDiskHealthSource = 3
 )
@@ -3303,13 +3303,13 @@ const (
 var (
 	BlockDiskHealthSource_name = map[int32]string{
 		0: "DISK_HEALTH_SOURCE_UNKNOWN",
-		1: "DISK_HEALTH_SOURCE_NV_ME",
+		1: "DISK_HEALTH_SOURCE_NVME",
 		2: "DISK_HEALTH_SOURCE_ATA",
 		3: "DISK_HEALTH_SOURCE_UNSUPPORTED",
 	}
 	BlockDiskHealthSource_value = map[string]int32{
 		"DISK_HEALTH_SOURCE_UNKNOWN":     0,
-		"DISK_HEALTH_SOURCE_NV_ME":       1,
+		"DISK_HEALTH_SOURCE_NVME":        1,
 		"DISK_HEALTH_SOURCE_ATA":         2,
 		"DISK_HEALTH_SOURCE_UNSUPPORTED": 3,
 	}
@@ -4618,10 +4618,10 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x12WOL_MODE_BROADCAST\x10\b\x12\x12\n" +
 	"\x0eWOL_MODE_MAGIC\x10 \x12\x19\n" +
 	"\x15WOL_MODE_MAGIC_SECURE\x10@\x12\x14\n" +
-	"\x0fWOL_MODE_FILTER\x10\x80\x01*\x95\x01\n" +
+	"\x0fWOL_MODE_FILTER\x10\x80\x01*\x94\x01\n" +
 	"\x15BlockDiskHealthSource\x12\x1e\n" +
-	"\x1aDISK_HEALTH_SOURCE_UNKNOWN\x10\x00\x12\x1c\n" +
-	"\x18DISK_HEALTH_SOURCE_NV_ME\x10\x01\x12\x1a\n" +
+	"\x1aDISK_HEALTH_SOURCE_UNKNOWN\x10\x00\x12\x1b\n" +
+	"\x17DISK_HEALTH_SOURCE_NVME\x10\x01\x12\x1a\n" +
 	"\x16DISK_HEALTH_SOURCE_ATA\x10\x02\x12\"\n" +
 	"\x1eDISK_HEALTH_SOURCE_UNSUPPORTED\x10\x03*\xb5\x01\n" +
 	"\x1aBlockDiskHealthStatusValue\x12$\n" +

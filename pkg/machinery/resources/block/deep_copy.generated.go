@@ -25,9 +25,9 @@ func (o DiskHealthATADetails) DeepCopy() DiskHealthATADetails {
 // DeepCopy generates a deep copy of DiskHealthDetails.
 func (o DiskHealthDetails) DeepCopy() DiskHealthDetails {
 	var cp DiskHealthDetails = o
-	if o.NVMe != nil {
-		retV := o.NVMe.DeepCopy()
-		cp.NVMe = &retV
+	if o.NVME != nil {
+		retV := o.NVME.DeepCopy()
+		cp.NVME = &retV
 	}
 	if o.ATA != nil {
 		retV := o.ATA.DeepCopy()

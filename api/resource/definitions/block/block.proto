@@ -76,7 +76,7 @@ message DiskHealthATADetails {
 
 // DiskHealthDetails contains backend-specific health details.
 message DiskHealthDetails {
-  DiskHealthNVMeDetails nv_me = 1;
+  DiskHealthNVMeDetails nvme = 1;
   DiskHealthATADetails ata = 2;
 }
 

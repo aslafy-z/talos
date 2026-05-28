@@ -12,7 +12,7 @@ type DiskHealthSource int
 //structprotogen:gen_enum
 const (
 	DiskHealthSourceUnknown     DiskHealthSource = iota // unknown
-	DiskHealthSourceNVMe                                // nvme
+	DiskHealthSourceNVME                                // nvme
 	DiskHealthSourceATA                                 // ata
 	DiskHealthSourceUnsupported                         // unsupported
 )

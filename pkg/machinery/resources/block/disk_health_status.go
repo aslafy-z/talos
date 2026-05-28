@@ -43,7 +43,7 @@ type DiskHealthStatusSpec struct {
 //
 //gotagsrewrite:gen
 type DiskHealthDetails struct {
-	NVMe *DiskHealthNVMeDetails `yaml:"nvme,omitempty" protobuf:"1"`
+	NVME *DiskHealthNVMeDetails `yaml:"nvme,omitempty" protobuf:"1"`
 	ATA  *DiskHealthATADetails  `yaml:"ata,omitempty" protobuf:"2"`
 }
 

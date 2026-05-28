@@ -121,7 +121,7 @@ func (s *DiskHealthMonitoringConfigV1Alpha1) DiskHealthMonitoringInterval() time
 	}
 
 	d, err := time.ParseDuration(s.IntervalConfig)
-	if err != nil {
+	if err != nil || d <= 0 {
 		return 5 * time.Minute
 	}
 

@@ -5116,7 +5116,7 @@ BlockDiskHealthSource describes the source of disk health information.
 | Name | Number | Description |
 | ---- | ------ | ----------- |
 | DISK_HEALTH_SOURCE_UNKNOWN | 0 |  |
-| DISK_HEALTH_SOURCE_NV_ME | 1 |  |
+| DISK_HEALTH_SOURCE_NVME | 1 |  |
 | DISK_HEALTH_SOURCE_ATA | 2 |  |
 | DISK_HEALTH_SOURCE_UNSUPPORTED | 3 |  |
 
@@ -6365,7 +6365,7 @@ DiskHealthDetails contains backend-specific health details.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| nv_me | [DiskHealthNVMeDetails](#talos.resource.definitions.block.DiskHealthNVMeDetails) |  |  |
+| nvme | [DiskHealthNVMeDetails](#talos.resource.definitions.block.DiskHealthNVMeDetails) |  |  |
 | ata | [DiskHealthATADetails](#talos.resource.definitions.block.DiskHealthATADetails) |  |  |
 
 
